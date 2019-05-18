@@ -19,18 +19,17 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"errors"
+	"github.com/wq1019/k8s-build/demo1"
 	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/gomodule/redigo/internal"
 )
 
 var (
-	_ ConnWithTimeout = (*activeConn)(nil)
-	_ ConnWithTimeout = (*errorConn)(nil)
+	_ demo1.ConnWithTimeout = (*activeConn)(nil)
+	_ demo1.ConnWithTimeout = (*errorConn)(nil)
 )
 
 var nowFunc = time.Now // for testing
@@ -125,14 +124,14 @@ type Pool struct {
 	//
 	// The connection returned from Dial must not be in a special state
 	// (subscribed to pubsub channel, transaction started, ...).
-	Dial func() (Conn, error)
+	Dial func() (demo1.Conn, error)
 
 	// TestOnBorrow is an optional application supplied function for checking
 	// the health of an idle connection before the connection is used again by
 	// the application. Argument t is the time that the connection was returned
 	// to the pool. If the function returns an error, then the connection is
 	// closed.
-	TestOnBorrow func(c Conn, t time.Time) error
+	TestOnBorrow func(c demo1.Conn, t time.Time) error
 
 	// Maximum number of idle connections in the pool.
 	MaxIdle int
@@ -166,7 +165,7 @@ type Pool struct {
 // NewPool creates a new pool.
 //
 // Deprecated: Initialize the Pool directory as shown in the example.
-func NewPool(newFn func() (Conn, error), maxIdle int) *Pool {
+func NewPool(newFn func() (demo1.Conn, error), maxIdle int) *Pool {
 	return &Pool{Dial: newFn, MaxIdle: maxIdle}
 }
 
@@ -175,7 +174,7 @@ func NewPool(newFn func() (Conn, error), maxIdle int) *Pool {
 // error handling to the first use of the connection. If there is an error
 // getting an underlying connection, then the connection Err, Do, Send, Flush
 // and Receive methods return that error.
-func (p *Pool) Get() Conn {
+func (p *Pool) Get() demo1.Conn {
 	pc, err := p.get(nil)
 	if err != nil {
 		return errorConn{err}
@@ -398,14 +397,14 @@ func (ac *activeConn) Close() error {
 	}
 	ac.pc = nil
 
-	if ac.state&internal.MultiState != 0 {
+	if ac.state&demo1.MultiState != 0 {
 		pc.c.Send("DISCARD")
-		ac.state &^= (internal.MultiState | internal.WatchState)
-	} else if ac.state&internal.WatchState != 0 {
+		ac.state &^= (demo1.MultiState | demo1.WatchState)
+	} else if ac.state&demo1.WatchState != 0 {
 		pc.c.Send("UNWATCH")
-		ac.state &^= internal.WatchState
+		ac.state &^= demo1.WatchState
 	}
-	if ac.state&internal.SubscribeState != 0 {
+	if ac.state&demo1.SubscribeState != 0 {
 		pc.c.Send("UNSUBSCRIBE")
 		pc.c.Send("PUNSUBSCRIBE")
 		// To detect the end of the message stream, ask the server to echo
@@ -419,7 +418,7 @@ func (ac *activeConn) Close() error {
 				break
 			}
 			if p, ok := p.([]byte); ok && bytes.Equal(p, sentinel) {
-				ac.state &^= internal.SubscribeState
+				ac.state &^= demo1.SubscribeState
 				break
 			}
 		}
@@ -442,7 +441,7 @@ func (ac *activeConn) Do(commandName string, args ...interface{}) (reply interfa
 	if pc == nil {
 		return nil, errConnClosed
 	}
-	ci := internal.LookupCommandInfo(commandName)
+	ci := demo1.LookupCommandInfo(commandName)
 	ac.state = (ac.state | ci.Set) &^ ci.Clear
 	return pc.c.Do(commandName, args...)
 }
@@ -452,11 +451,11 @@ func (ac *activeConn) DoWithTimeout(timeout time.Duration, commandName string, a
 	if pc == nil {
 		return nil, errConnClosed
 	}
-	cwt, ok := pc.c.(ConnWithTimeout)
+	cwt, ok := pc.c.(demo1.ConnWithTimeout)
 	if !ok {
-		return nil, errTimeoutNotSupported
+		return nil, demo1.errTimeoutNotSupported
 	}
-	ci := internal.LookupCommandInfo(commandName)
+	ci := demo1.LookupCommandInfo(commandName)
 	ac.state = (ac.state | ci.Set) &^ ci.Clear
 	return cwt.DoWithTimeout(timeout, commandName, args...)
 }
@@ -466,7 +465,7 @@ func (ac *activeConn) Send(commandName string, args ...interface{}) error {
 	if pc == nil {
 		return errConnClosed
 	}
-	ci := internal.LookupCommandInfo(commandName)
+	ci := demo1.LookupCommandInfo(commandName)
 	ac.state = (ac.state | ci.Set) &^ ci.Clear
 	return pc.c.Send(commandName, args...)
 }
@@ -492,9 +491,9 @@ func (ac *activeConn) ReceiveWithTimeout(timeout time.Duration) (reply interface
 	if pc == nil {
 		return nil, errConnClosed
 	}
-	cwt, ok := pc.c.(ConnWithTimeout)
+	cwt, ok := pc.c.(demo1.ConnWithTimeout)
 	if !ok {
-		return nil, errTimeoutNotSupported
+		return nil, demo1.errTimeoutNotSupported
 	}
 	return cwt.ReceiveWithTimeout(timeout)
 }
@@ -518,7 +517,7 @@ type idleList struct {
 }
 
 type poolConn struct {
-	c          Conn
+	c          demo1.Conn
 	t          time.Time
 	created    time.Time
 	next, prev *poolConn

@@ -16,6 +16,7 @@ package redis
 
 import (
 	"errors"
+	"github.com/wq1019/k8s-build/demo1"
 	"time"
 )
 
@@ -50,7 +51,7 @@ type Pong struct {
 
 // PubSubConn wraps a Conn with convenience methods for subscribers.
 type PubSubConn struct {
-	Conn Conn
+	Conn demo1.Conn
 }
 
 // Close closes the connection.
@@ -103,17 +104,17 @@ func (c PubSubConn) Receive() interface{} {
 // ReceiveWithTimeout is like Receive, but it allows the application to
 // override the connection's default timeout.
 func (c PubSubConn) ReceiveWithTimeout(timeout time.Duration) interface{} {
-	return c.receiveInternal(ReceiveWithTimeout(c.Conn, timeout))
+	return c.receiveInternal(demo1.ReceiveWithTimeout(c.Conn, timeout))
 }
 
 func (c PubSubConn) receiveInternal(replyArg interface{}, errArg error) interface{} {
-	reply, err := Values(replyArg, errArg)
+	reply, err := demo1.Values(replyArg, errArg)
 	if err != nil {
 		return err
 	}
 
 	var kind string
-	reply, err = Scan(reply, &kind)
+	reply, err = demo1.Scan(reply, &kind)
 	if err != nil {
 		return err
 	}
@@ -121,25 +122,25 @@ func (c PubSubConn) receiveInternal(replyArg interface{}, errArg error) interfac
 	switch kind {
 	case "message":
 		var m Message
-		if _, err := Scan(reply, &m.Channel, &m.Data); err != nil {
+		if _, err := demo1.Scan(reply, &m.Channel, &m.Data); err != nil {
 			return err
 		}
 		return m
 	case "pmessage":
 		var m Message
-		if _, err := Scan(reply, &m.Pattern, &m.Channel, &m.Data); err != nil {
+		if _, err := demo1.Scan(reply, &m.Pattern, &m.Channel, &m.Data); err != nil {
 			return err
 		}
 		return m
 	case "subscribe", "psubscribe", "unsubscribe", "punsubscribe":
 		s := Subscription{Kind: kind}
-		if _, err := Scan(reply, &s.Channel, &s.Count); err != nil {
+		if _, err := demo1.Scan(reply, &s.Channel, &s.Count); err != nil {
 			return err
 		}
 		return s
 	case "pong":
 		var p Pong
-		if _, err := Scan(reply, &p.Data); err != nil {
+		if _, err := demo1.Scan(reply, &p.Data); err != nil {
 			return err
 		}
 		return p

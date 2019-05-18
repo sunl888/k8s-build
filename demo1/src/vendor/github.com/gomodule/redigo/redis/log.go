@@ -17,16 +17,17 @@ package redis
 import (
 	"bytes"
 	"fmt"
+	"github.com/wq1019/k8s-build/demo1"
 	"log"
 	"time"
 )
 
 var (
-	_ ConnWithTimeout = (*loggingConn)(nil)
+	_ demo1.ConnWithTimeout = (*loggingConn)(nil)
 )
 
 // NewLoggingConn returns a logging wrapper around a connection.
-func NewLoggingConn(conn Conn, logger *log.Logger, prefix string) Conn {
+func NewLoggingConn(conn demo1.Conn, logger *log.Logger, prefix string) demo1.Conn {
 	if prefix != "" {
 		prefix = prefix + "."
 	}
@@ -34,7 +35,7 @@ func NewLoggingConn(conn Conn, logger *log.Logger, prefix string) Conn {
 }
 
 type loggingConn struct {
-	Conn
+	demo1.Conn
 	logger *log.Logger
 	prefix string
 }
@@ -110,7 +111,7 @@ func (c *loggingConn) Do(commandName string, args ...interface{}) (interface{}, 
 }
 
 func (c *loggingConn) DoWithTimeout(timeout time.Duration, commandName string, args ...interface{}) (interface{}, error) {
-	reply, err := DoWithTimeout(c.Conn, timeout, commandName, args...)
+	reply, err := demo1.DoWithTimeout(c.Conn, timeout, commandName, args...)
 	c.print("DoWithTimeout", commandName, args, reply, err)
 	return reply, err
 }
@@ -128,7 +129,7 @@ func (c *loggingConn) Receive() (interface{}, error) {
 }
 
 func (c *loggingConn) ReceiveWithTimeout(timeout time.Duration) (interface{}, error) {
-	reply, err := ReceiveWithTimeout(c.Conn, timeout)
+	reply, err := demo1.ReceiveWithTimeout(c.Conn, timeout)
 	c.print("ReceiveWithTimeout", "", nil, reply, err)
 	return reply, err
 }

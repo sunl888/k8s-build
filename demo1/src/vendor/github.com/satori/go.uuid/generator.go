@@ -26,6 +26,7 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/binary"
+	"github.com/wq1019/k8s-build/demo1"
 	"hash"
 	"net"
 	"os"
@@ -46,37 +47,37 @@ var (
 )
 
 // NewV1 returns UUID based on current timestamp and MAC address.
-func NewV1() UUID {
+func NewV1() demo1.UUID {
 	return global.NewV1()
 }
 
 // NewV2 returns DCE Security UUID based on POSIX UID/GID.
-func NewV2(domain byte) UUID {
+func NewV2(domain byte) demo1.UUID {
 	return global.NewV2(domain)
 }
 
 // NewV3 returns UUID based on MD5 hash of namespace UUID and name.
-func NewV3(ns UUID, name string) UUID {
+func NewV3(ns demo1.UUID, name string) demo1.UUID {
 	return global.NewV3(ns, name)
 }
 
 // NewV4 returns random generated UUID.
-func NewV4() UUID {
+func NewV4() demo1.UUID {
 	return global.NewV4()
 }
 
 // NewV5 returns UUID based on SHA-1 hash of namespace UUID and name.
-func NewV5(ns UUID, name string) UUID {
+func NewV5(ns demo1.UUID, name string) demo1.UUID {
 	return global.NewV5(ns, name)
 }
 
 // Generator provides interface for generating UUIDs.
 type Generator interface {
-	NewV1() UUID
-	NewV2(domain byte) UUID
-	NewV3(ns UUID, name string) UUID
-	NewV4() UUID
-	NewV5(ns UUID, name string) UUID
+	NewV1() demo1.UUID
+	NewV2(domain byte) demo1.UUID
+	NewV3(ns demo1.UUID, name string) demo1.UUID
+	NewV4() demo1.UUID
+	NewV5(ns demo1.UUID, name string) demo1.UUID
 }
 
 // Default generator implementation.
@@ -94,8 +95,8 @@ func newDefaultGenerator() Generator {
 }
 
 // NewV1 returns UUID based on current timestamp and MAC address.
-func (g *generator) NewV1() UUID {
-	u := UUID{}
+func (g *generator) NewV1() demo1.UUID {
+	u := demo1.UUID{}
 
 	timeNow, clockSeq, hardwareAddr := g.getStorage()
 
@@ -106,22 +107,22 @@ func (g *generator) NewV1() UUID {
 
 	copy(u[10:], hardwareAddr)
 
-	u.SetVersion(V1)
-	u.SetVariant(VariantRFC4122)
+	u.SetVersion(demo1.V1)
+	u.SetVariant(demo1.VariantRFC4122)
 
 	return u
 }
 
 // NewV2 returns DCE Security UUID based on POSIX UID/GID.
-func (g *generator) NewV2(domain byte) UUID {
-	u := UUID{}
+func (g *generator) NewV2(domain byte) demo1.UUID {
+	u := demo1.UUID{}
 
 	timeNow, clockSeq, hardwareAddr := g.getStorage()
 
 	switch domain {
-	case DomainPerson:
+	case demo1.DomainPerson:
 		binary.BigEndian.PutUint32(u[0:], posixUID)
-	case DomainGroup:
+	case demo1.DomainGroup:
 		binary.BigEndian.PutUint32(u[0:], posixGID)
 	}
 
@@ -132,36 +133,36 @@ func (g *generator) NewV2(domain byte) UUID {
 
 	copy(u[10:], hardwareAddr)
 
-	u.SetVersion(V2)
-	u.SetVariant(VariantRFC4122)
+	u.SetVersion(demo1.V2)
+	u.SetVariant(demo1.VariantRFC4122)
 
 	return u
 }
 
 // NewV3 returns UUID based on MD5 hash of namespace UUID and name.
-func (g *generator) NewV3(ns UUID, name string) UUID {
+func (g *generator) NewV3(ns demo1.UUID, name string) demo1.UUID {
 	u := newFromHash(md5.New(), ns, name)
-	u.SetVersion(V3)
-	u.SetVariant(VariantRFC4122)
+	u.SetVersion(demo1.V3)
+	u.SetVariant(demo1.VariantRFC4122)
 
 	return u
 }
 
 // NewV4 returns random generated UUID.
-func (g *generator) NewV4() UUID {
-	u := UUID{}
+func (g *generator) NewV4() demo1.UUID {
+	u := demo1.UUID{}
 	g.safeRandom(u[:])
-	u.SetVersion(V4)
-	u.SetVariant(VariantRFC4122)
+	u.SetVersion(demo1.V4)
+	u.SetVariant(demo1.VariantRFC4122)
 
 	return u
 }
 
 // NewV5 returns UUID based on SHA-1 hash of namespace UUID and name.
-func (g *generator) NewV5(ns UUID, name string) UUID {
+func (g *generator) NewV5(ns demo1.UUID, name string) demo1.UUID {
 	u := newFromHash(sha1.New(), ns, name)
-	u.SetVersion(V5)
-	u.SetVariant(VariantRFC4122)
+	u.SetVersion(demo1.V5)
+	u.SetVariant(demo1.VariantRFC4122)
 
 	return u
 }
@@ -229,8 +230,8 @@ func unixTimeFunc() uint64 {
 }
 
 // Returns UUID based on hashing of namespace UUID and name.
-func newFromHash(h hash.Hash, ns UUID, name string) UUID {
-	u := UUID{}
+func newFromHash(h hash.Hash, ns demo1.UUID, name string) demo1.UUID {
+	u := demo1.UUID{}
 	h.Write(ns[:])
 	h.Write([]byte(name))
 	copy(u[:], h.Sum(nil))

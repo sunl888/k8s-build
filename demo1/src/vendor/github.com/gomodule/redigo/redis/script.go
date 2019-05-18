@@ -17,6 +17,7 @@ package redis
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/wq1019/k8s-build/demo1"
 	"io"
 	"strings"
 )
@@ -64,9 +65,9 @@ func (s *Script) Hash() string {
 // script using the EVALSHA command. If the command fails because the script is
 // not loaded, then Do evaluates the script using the EVAL command (thus
 // causing the script to load).
-func (s *Script) Do(c Conn, keysAndArgs ...interface{}) (interface{}, error) {
+func (s *Script) Do(c demo1.Conn, keysAndArgs ...interface{}) (interface{}, error) {
 	v, err := c.Do("EVALSHA", s.args(s.hash, keysAndArgs)...)
-	if e, ok := err.(Error); ok && strings.HasPrefix(string(e), "NOSCRIPT ") {
+	if e, ok := err.(demo1.Error); ok && strings.HasPrefix(string(e), "NOSCRIPT ") {
 		v, err = c.Do("EVAL", s.args(s.src, keysAndArgs)...)
 	}
 	return v, err
@@ -75,17 +76,17 @@ func (s *Script) Do(c Conn, keysAndArgs ...interface{}) (interface{}, error) {
 // SendHash evaluates the script without waiting for the reply. The script is
 // evaluated with the EVALSHA command. The application must ensure that the
 // script is loaded by a previous call to Send, Do or Load methods.
-func (s *Script) SendHash(c Conn, keysAndArgs ...interface{}) error {
+func (s *Script) SendHash(c demo1.Conn, keysAndArgs ...interface{}) error {
 	return c.Send("EVALSHA", s.args(s.hash, keysAndArgs)...)
 }
 
 // Send evaluates the script without waiting for the reply.
-func (s *Script) Send(c Conn, keysAndArgs ...interface{}) error {
+func (s *Script) Send(c demo1.Conn, keysAndArgs ...interface{}) error {
 	return c.Send("EVAL", s.args(s.src, keysAndArgs)...)
 }
 
 // Load loads the script without evaluating it.
-func (s *Script) Load(c Conn) error {
+func (s *Script) Load(c demo1.Conn) error {
 	_, err := c.Do("SCRIPT", "LOAD", s.src)
 	return err
 }

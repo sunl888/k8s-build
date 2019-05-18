@@ -17,6 +17,7 @@ package redis
 import (
 	"errors"
 	"fmt"
+	"github.com/wq1019/k8s-build/demo1"
 	"strconv"
 )
 
@@ -48,7 +49,7 @@ func Int(reply interface{}, err error) (int, error) {
 		return int(n), err
 	case nil:
 		return 0, ErrNil
-	case Error:
+	case demo1.Error:
 		return 0, reply
 	}
 	return 0, fmt.Errorf("redigo: unexpected type for Int, got type %T", reply)
@@ -75,7 +76,7 @@ func Int64(reply interface{}, err error) (int64, error) {
 		return n, err
 	case nil:
 		return 0, ErrNil
-	case Error:
+	case demo1.Error:
 		return 0, reply
 	}
 	return 0, fmt.Errorf("redigo: unexpected type for Int64, got type %T", reply)
@@ -107,7 +108,7 @@ func Uint64(reply interface{}, err error) (uint64, error) {
 		return n, err
 	case nil:
 		return 0, ErrNil
-	case Error:
+	case demo1.Error:
 		return 0, reply
 	}
 	return 0, fmt.Errorf("redigo: unexpected type for Uint64, got type %T", reply)
@@ -131,7 +132,7 @@ func Float64(reply interface{}, err error) (float64, error) {
 		return n, err
 	case nil:
 		return 0, ErrNil
-	case Error:
+	case demo1.Error:
 		return 0, reply
 	}
 	return 0, fmt.Errorf("redigo: unexpected type for Float64, got type %T", reply)
@@ -157,7 +158,7 @@ func String(reply interface{}, err error) (string, error) {
 		return reply, nil
 	case nil:
 		return "", ErrNil
-	case Error:
+	case demo1.Error:
 		return "", reply
 	}
 	return "", fmt.Errorf("redigo: unexpected type for String, got type %T", reply)
@@ -183,7 +184,7 @@ func Bytes(reply interface{}, err error) ([]byte, error) {
 		return []byte(reply), nil
 	case nil:
 		return nil, ErrNil
-	case Error:
+	case demo1.Error:
 		return nil, reply
 	}
 	return nil, fmt.Errorf("redigo: unexpected type for Bytes, got type %T", reply)
@@ -209,7 +210,7 @@ func Bool(reply interface{}, err error) (bool, error) {
 		return strconv.ParseBool(string(reply))
 	case nil:
 		return false, ErrNil
-	case Error:
+	case demo1.Error:
 		return false, reply
 	}
 	return false, fmt.Errorf("redigo: unexpected type for Bool, got type %T", reply)
@@ -237,7 +238,7 @@ func Values(reply interface{}, err error) ([]interface{}, error) {
 		return reply, nil
 	case nil:
 		return nil, ErrNil
-	case Error:
+	case demo1.Error:
 		return nil, reply
 	}
 	return nil, fmt.Errorf("redigo: unexpected type for Values, got type %T", reply)
@@ -261,7 +262,7 @@ func sliceHelper(reply interface{}, err error, name string, makeSlice func(int),
 		return nil
 	case nil:
 		return ErrNil
-	case Error:
+	case demo1.Error:
 		return reply
 	}
 	return fmt.Errorf("redigo: unexpected type for %s, got type %T", name, reply)

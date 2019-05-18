@@ -17,6 +17,7 @@ package redis
 import (
 	"errors"
 	"fmt"
+	"github.com/wq1019/k8s-build/demo1"
 	"reflect"
 	"strconv"
 	"strings"
@@ -36,7 +37,7 @@ func cannotConvert(d reflect.Value, s interface{}) error {
 	switch s.(type) {
 	case string:
 		sname = "Redis simple string"
-	case Error:
+	case demo1.Error:
 		sname = "Redis error"
 	case int64:
 		sname = "Redis integer"
@@ -114,7 +115,7 @@ func convertAssignValue(d reflect.Value, s interface{}) (err error) {
 		if d.CanAddr() {
 			d2 := d.Addr()
 			if d2.CanInterface() {
-				if scanner, ok := d2.Interface().(Scanner); ok {
+				if scanner, ok := d2.Interface().(demo1.Scanner); ok {
 					return scanner.RedisScan(s)
 				}
 			}
@@ -124,7 +125,7 @@ func convertAssignValue(d reflect.Value, s interface{}) (err error) {
 		if d.IsNil() {
 			d.Set(reflect.New(d.Type().Elem()))
 		}
-		if scanner, ok := d.Interface().(Scanner); ok {
+		if scanner, ok := d.Interface().(demo1.Scanner); ok {
 			return scanner.RedisScan(s)
 		}
 	}
@@ -154,7 +155,7 @@ func convertAssignArray(d reflect.Value, s []interface{}) error {
 }
 
 func convertAssign(d interface{}, s interface{}) (err error) {
-	if scanner, ok := d.(Scanner); ok {
+	if scanner, ok := d.(demo1.Scanner); ok {
 		return scanner.RedisScan(s)
 	}
 
@@ -232,7 +233,7 @@ func convertAssign(d interface{}, s interface{}) (err error) {
 				err = convertAssignArray(d.Elem(), s)
 			}
 		}
-	case Error:
+	case demo1.Error:
 		err = s
 	default:
 		err = cannotConvert(reflect.ValueOf(d), s)

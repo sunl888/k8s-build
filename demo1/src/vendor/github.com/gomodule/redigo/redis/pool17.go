@@ -16,7 +16,10 @@
 
 package redis
 
-import "context"
+import (
+	"context"
+	"github.com/wq1019/k8s-build/demo1"
+)
 
 // GetContext gets a connection using the provided context.
 //
@@ -26,10 +29,10 @@ import "context"
 //
 // If the function completes without error, then the application must close the
 // returned connection.
-func (p *Pool) GetContext(ctx context.Context) (Conn, error) {
+func (p *demo1.Pool) GetContext(ctx context.Context) (demo1.Conn, error) {
 	pc, err := p.get(ctx)
 	if err != nil {
-		return errorConn{err}, err
+		return demo1.errorConn{err}, err
 	}
-	return &activeConn{p: p, pc: pc}, nil
+	return &demo1.activeConn{p: p, pc: pc}, nil
 }

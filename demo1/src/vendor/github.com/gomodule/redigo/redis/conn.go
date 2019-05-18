@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/wq1019/k8s-build/demo1"
 	"io"
 	"net"
 	"net/url"
@@ -30,7 +31,7 @@ import (
 )
 
 var (
-	_ ConnWithTimeout = (*conn)(nil)
+	_ demo1.ConnWithTimeout = (*conn)(nil)
 )
 
 // conn is the low-level implementation of Conn
@@ -61,7 +62,7 @@ type conn struct {
 // connection to the server, writing a command and reading a reply.
 //
 // Deprecated: Use Dial with options instead.
-func DialTimeout(network, address string, connectTimeout, readTimeout, writeTimeout time.Duration) (Conn, error) {
+func DialTimeout(network, address string, connectTimeout, readTimeout, writeTimeout time.Duration) (demo1.Conn, error) {
 	return Dial(network, address,
 		DialConnectTimeout(connectTimeout),
 		DialReadTimeout(readTimeout),
@@ -167,7 +168,7 @@ func DialUseTLS(useTLS bool) DialOption {
 
 // Dial connects to the Redis server at the given network and
 // address using the specified options.
-func Dial(network, address string, options ...DialOption) (Conn, error) {
+func Dial(network, address string, options ...DialOption) (demo1.Conn, error) {
 	do := dialOptions{
 		dialer: &net.Dialer{
 			KeepAlive: time.Minute * 5,
@@ -190,7 +191,7 @@ func Dial(network, address string, options ...DialOption) (Conn, error) {
 		if do.tlsConfig == nil {
 			tlsConfig = &tls.Config{InsecureSkipVerify: do.skipVerify}
 		} else {
-			tlsConfig = cloneTLSConfig(do.tlsConfig)
+			tlsConfig = demo1.cloneTLSConfig(do.tlsConfig)
 		}
 		if tlsConfig.ServerName == "" {
 			host, _, err := net.SplitHostPort(address)
@@ -239,7 +240,7 @@ var pathDBRegexp = regexp.MustCompile(`/(\d*)\z`)
 // DialURL connects to a Redis server at the given URL using the Redis
 // URI scheme. URLs should follow the draft IANA specification for the
 // scheme (https://www.iana.org/assignments/uri-schemes/prov/redis).
-func DialURL(rawurl string, options ...DialOption) (Conn, error) {
+func DialURL(rawurl string, options ...DialOption) (demo1.Conn, error) {
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return nil, err
@@ -291,7 +292,7 @@ func DialURL(rawurl string, options ...DialOption) (Conn, error) {
 }
 
 // NewConn returns a new Redigo connection for the given net connection.
-func NewConn(netConn net.Conn, readTimeout, writeTimeout time.Duration) Conn {
+func NewConn(netConn net.Conn, readTimeout, writeTimeout time.Duration) demo1.Conn {
 	return &conn{
 		conn:         netConn,
 		bw:           bufio.NewWriter(netConn),
@@ -403,7 +404,7 @@ func (c *conn) writeArg(arg interface{}, argumentTypeOK bool) (err error) {
 		}
 	case nil:
 		return c.writeString("")
-	case Argument:
+	case demo1.Argument:
 		if argumentTypeOK {
 			return c.writeArg(arg.RedisArg(), false)
 		}
@@ -521,7 +522,7 @@ func (c *conn) readReply() (interface{}, error) {
 			return string(line[1:]), nil
 		}
 	case '-':
-		return Error(string(line[1:])), nil
+		return demo1.Error(string(line[1:])), nil
 	case ':':
 		return parseInt(line[1:])
 	case '$':
@@ -606,7 +607,7 @@ func (c *conn) ReceiveWithTimeout(timeout time.Duration) (reply interface{}, err
 		c.pending -= 1
 	}
 	c.mu.Unlock()
-	if err, ok := reply.(Error); ok {
+	if err, ok := reply.(demo1.Error); ok {
 		return nil, err
 	}
 	return
@@ -665,7 +666,7 @@ func (c *conn) DoWithTimeout(readTimeout time.Duration, cmd string, args ...inte
 		if reply, e = c.readReply(); e != nil {
 			return nil, c.fatal(e)
 		}
-		if e, ok := reply.(Error); ok && err == nil {
+		if e, ok := reply.(demo1.Error); ok && err == nil {
 			err = e
 		}
 	}
