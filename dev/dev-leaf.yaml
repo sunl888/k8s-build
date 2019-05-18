@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: leaf
+  name: leaf
+  namespace: ypdan
+spec:
+  selector:
+    matchLabels:
+      app: leaf
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: leaf
+        version: v1.0.1
+    spec:
+      containers:
+        - image: registry.cn-shenzhen.aliyuncs.com/zm-dev/leaf:latest
+          name: leaf
+          ports:
+            - containerPort: 8080
+      imagePullSecrets:
+        - name: registry-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: leaf
+  name: leaf
+  namespace: ypdan
+spec:
+  ports:
+    - protocol: TCP
+      port: 9111
+      targetPort: 8080
+  selector:
+    app: leaf
+#  type: NodePort

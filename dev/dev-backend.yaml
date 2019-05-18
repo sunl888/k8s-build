@@ -1,0 +1,112 @@
+---
+# replica set是用于保证与label selector匹配的pod数量维持在期望状态
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # 对 pod 进行逻辑上分组，Service就是通过Label Selector的方式来关联多个Pod的（https://juejin.im/post/5c8231486fb9a049ca3825b0）
+  labels:
+    app: backend
+  name: backend
+  namespace: ypdan
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  replicas: 1
+  strategy:
+    # 策略定义为 Recreate的 Deployment，会终止所有正在运行的实例，然后用较新的版本来重新创建它们
+    # 服务的停机时间取决于应用程序的关闭和启动持续时间
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: backend
+        # 更新这个版本然后重新 apply 会自动更新pod
+        version: v1.0.0
+    spec:
+      containers:
+        - name: backend
+          image: registry.cn-shenzhen.aliyuncs.com/zm-dev/ypdan-k8s:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_OPTS
+              value: -Xms1024m -Xmx2048m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
+            - name: JAVA_ARGS
+              value: -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=k8s
+          resources:
+            # limits表示单个pod最大能够获取到的资源配额
+            limits:
+              cpu: 25m
+              memory: 80Mi
+            # requests表示pod所需要分配的资源配额
+            requests:
+              cpu: 50m
+              memory: 80Mi
+          # 每次都从远程仓库pull
+          imagePullPolicy: Always
+          # 私有仓库 需要 kubectl create secret
+      imagePullSecrets:
+        - name: registry-secret
+
+
+---
+
+# 对 selector.app 选中的 pods 进行集中管理
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: backend
+  name: backend
+  namespace: ypdan
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: backend
+
+---
+
+# service 对外暴露服务规则
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: backend-ingress
+  namespace: ypdan
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: "http,https"
+spec:
+  rules:
+    - host: tomcat.test.k8s
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: backend
+              servicePort: 8080
+
+---
+
+# 自动缩扩容
+#apiVersion: autoscaling/v1
+#kind: HorizontalPodAutoscaler
+#metadata:
+#  name: dev-backend-hpa
+#  namespace: ypdan
+#spec:
+#  # 资源最大副本数
+#  maxReplicas: 5
+#  # 资源最小副本数
+#  minReplicas: 1
+#  scaleTargetRef:
+#    apiVersion: extensions/v1beta1
+#    # 需要伸缩的资源类型
+#    kind: Deployment
+#    # 需要伸缩的资源名称
+#    name: backend
+#  # 触发伸缩的cpu使用率
+#  targetCPUUtilizationPercentage: 70

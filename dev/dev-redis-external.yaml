@@ -1,0 +1,26 @@
+# 外部 redis, 这样可以连接网易云的内部  redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ypdan
+spec:
+  ports:
+    - port: 6379
+
+---
+
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: redis
+  namespace: ypdan
+subsets:
+  - addresses:
+      # dev
+      # netease ip:192.168.0.13
+      # 此处的 ip就是外部服务调用本 endpoints 时会被定向到这个ip(可以是内网ip 也可以是外网ip)
+      - ip: 59.111.58.150
+    ports:
+      - port: 6379
