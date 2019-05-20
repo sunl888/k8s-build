@@ -1,12 +1,12 @@
 .PHONY: build
 
-clean: clean_docker
+clean: clean_local_registry
 
-clean_docker:
+clean_local_registry:
 	docker system prune -f
 
-build_docker:
+build:
 	docker build -t registry.cn-qingdao.aliyuncs.com/wqer/hello-k8s:latest .
 
-upload: clean build_docker
+upload: clean build
 	docker push registry.cn-qingdao.aliyuncs.com/wqer/hello-k8s:latest

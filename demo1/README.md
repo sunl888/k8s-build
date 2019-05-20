@@ -2,4 +2,5 @@
 
 ## API
 
-/api/test
+backend: /api/k8s
+frontend: /

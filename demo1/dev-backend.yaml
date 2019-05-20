@@ -7,7 +7,7 @@ metadata:
   labels:
     app: hello
   name: hello
-#  namespace: hello-dev
+  namespace: hello-dev
 spec:
   selector:
     matchLabels:
@@ -22,7 +22,7 @@ spec:
       labels:
         app: hello
         # 更新这个版本然后重新 apply 会自动更新pod
-        version: v1.0.0
+        version: v1.0.2
     spec:
       containers:
         - name: hello
@@ -50,7 +50,7 @@ metadata:
   labels:
     app: hello
   name: hello
-#  namespace: hello-dev
+  namespace: hello-dev
   annotations:
     # 配置了会话保持特性。Traefik的默认配置为不做会话保持，即同一个用户的请求会在后端应用的不同实例之间切换。对于需要通过Session维持登录状态的服务就会出现登录无效的问题。
     # 这里通过查询和尝试后发现对于会话保持和负载均衡策略的配置不是直接体现在traefik配置文件中的，而是在其对应后端Service中添加annotations来实现
