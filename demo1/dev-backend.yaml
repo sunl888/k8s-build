@@ -1,0 +1,73 @@
+---
+# replica set是用于保证与label selector匹配的pod数量维持在期望状态
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # 对 pod 进行逻辑上分组，Service就是通过Label Selector的方式来关联多个Pod的（https://juejin.im/post/5c8231486fb9a049ca3825b0）
+  labels:
+    app: hello
+  name: hello
+#  namespace: hello-dev
+spec:
+  selector:
+    matchLabels:
+      app: hello
+  replicas: 3
+  strategy:
+    # 策略定义为 Recreate的 Deployment，会终止所有正在运行的实例，然后用较新的版本来重新创建它们
+    # 服务的停机时间取决于应用程序的关闭和启动持续时间
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: hello
+        # 更新这个版本然后重新 apply 会自动更新pod
+        version: v1.0.0
+    spec:
+      containers:
+        - name: hello
+          image: registry.cn-qingdao.aliyuncs.com/wqer/hello-k8s:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            # limits表示单个pod最大能够获取到的资源配额
+            limits:
+              cpu: 50m
+              memory: 80Mi
+            # requests表示pod所需要分配的资源配额
+            requests:
+              cpu: 50m
+              memory: 80Mi
+          # 每次都从远程仓库pull
+          imagePullPolicy: Always
+
+---
+
+# 对 selector.app 选中的 pods 进行集中管理
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: hello
+  name: hello
+#  namespace: hello-dev
+  annotations:
+    # 配置了会话保持特性。Traefik的默认配置为不做会话保持，即同一个用户的请求会在后端应用的不同实例之间切换。对于需要通过Session维持登录状态的服务就会出现登录无效的问题。
+    # 这里通过查询和尝试后发现对于会话保持和负载均衡策略的配置不是直接体现在traefik配置文件中的，而是在其对应后端Service中添加annotations来实现
+    traefik.ingress.kubernetes.io/affinity: "true"
+    traefik.ingress.kubernetes.io/session-cookie-name: "xxx"
+    # 将负载均衡策略从默认的 drr 改为了 wrr
+    traefik.ingress.kubernetes.io/load-balancer-method: drr
+    traefik.backend.circuitbreaker: NetworkErrorRatio() > 0.5
+spec:
+  ports:
+    - name: web
+      # port 和 nodePort 都是 service 的端口, port 暴露给集群内客户访问服务
+      port: 8080
+      # targetPort 是 pod 上的端口，从 port 和 nodePort 上到来的数据最终经过 kube-proxy 流入到后端 pod 的 targetPort 上进入容器。
+      targetPort: 8080
+      # nodePort 暴露给集群外客户访问服务, 配置不灵活，生产环境不推荐使用
+      # nodePort: 30000
+  #  type: NodePort
+  selector:
+    app: hello

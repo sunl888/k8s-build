@@ -1,5 +1,3 @@
-# 外部 redis, 这样可以连接网易云的内部  redis
----
 apiVersion: v1
 kind: Service
 metadata:

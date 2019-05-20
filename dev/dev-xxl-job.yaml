@@ -21,7 +21,7 @@ spec:
       containers:
         - env:
             - name: PARAMS
-              value: --spring.datasource.url=jdbc:mysql://dev.hn-zm.com:3306/xxl-job?autoReconnect=true&tinyInt1isBit=false&useUnicode=true&charset=utf8mb4&collation=utf8_general_ci&useSSL=false&characterEncoding=UTF-8  --spring.datasource.username=root  --spring.datasource.password=zm2018  --xxl.job.login.username=admin  --xxl.job.login.password=ypdan2018  --xxl.job.accessToken=ypdan2018
+              value: --spring.datasource.url=jdbc:mysql://xxx.com:3306/xxl-job?autoReconnect=true&tinyInt1isBit=false&useUnicode=true&charset=utf8mb4&collation=utf8_general_ci&useSSL=false&characterEncoding=UTF-8  --spring.datasource.username=root  --spring.datasource.password=zm2018  --xxl.job.login.username=admin  --xxl.job.login.password=ypdan2018  --xxl.job.accessToken=ypdan2018
           image: xuxueli/xxl-job-admin:2.0.1
           name: xxl-job
           ports:
@@ -68,15 +68,3 @@ spec:
   resources:
     requests:
       storage: 1Gi
-
-# kubectl -n ypdan delete svc,deployment backend xxl-job redis leaf
-# kubectl -n ypdan delete pvc xxl-job-claim0
-
-# kubectl apply -f dev-redis-external.yaml
-# kubectl apply -f dev-xxl-job.yaml
-# kubectl apply -f dev-leaf.yaml
-# kubectl apply -f dev-backend.yaml
-
-# kubectl -n ypdan logs -f backend-854494d4d6-qmjs8
-
-# kubectl -n ypdan get all

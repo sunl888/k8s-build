@@ -1,0 +1,18 @@
+---
+# 对于hello Service 我们声明一个 traefik 规则
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: hello-ingress-traefik
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    - host: hello.local
+      http:
+        paths:
+          - path: /api/(\*)
+            #          - path: /
+            backend:
+              serviceName: hello
+              servicePort: 8080

@@ -32,7 +32,7 @@ spec:
             - name: http
               containerPort: 80
             - name: admin
-              containerPort: 8580
+              containerPort: 8080
           args:
             - --api
             - --kubernetes
@@ -47,10 +47,10 @@ spec:
   selector:
     k8s-app: traefik-ingress-lb
   ports:
-    - protocol: http
+    - protocol: TCP
       port: 80
-      name: web
-    - protocol: http
+      name: http
+    - protocol: TCP
       port: 8080
       name: admin
   type: NodePort
